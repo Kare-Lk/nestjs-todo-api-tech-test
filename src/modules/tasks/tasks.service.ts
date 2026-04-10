@@ -137,6 +137,7 @@ export class TasksService {
       where: {
         id: taskId,
         user: { id: userId },
+        is_deleted: false,
       },
     });
 
