@@ -7,6 +7,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TasksService } from './tasks.service';
@@ -20,6 +21,10 @@ import {
   UpdateTaskSchema,
   type UpdateTaskDto,
 } from './schemas/update-task.schema';
+import {
+  FindTasksSchema,
+  type FindTasksDto,
+} from './schemas/find-tasks.schema';
 
 @UseGuards(JwtAuthGuard)
 @Controller('tasks')
@@ -35,8 +40,11 @@ export class TasksController {
   }
 
   @Get()
-  findAll(@CurrentUser('userId') userId: string) {
-    return this.tasksService.findAll(userId);
+  findAll(
+    @CurrentUser('userId') userId: string,
+    @Query(new ZodValidationPipe(FindTasksSchema)) query: FindTasksDto,
+  ) {
+    return this.tasksService.findAll(userId, query);
   }
 
   @Patch(':id')

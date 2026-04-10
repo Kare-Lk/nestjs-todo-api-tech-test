@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { UpdateTaskDto } from './schemas/update-task.schema';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../common/redis/redis.module';
+import { FindTasksDto } from './schemas/find-tasks.schema';
 
 @Injectable()
 export class TasksService {
@@ -16,13 +17,17 @@ export class TasksService {
     @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
   ) {}
 
-  private getUserTasksCacheKey(userId: string) {
-    return `tasks:user:${userId}`;
+  private getUserTasksCacheKey(userId: string, page: number, limit: number) {
+    return `tasks:user:${userId}:page:${page}:limit:${limit}`;
   }
 
   private async invalidateUserTasksCache(userId: string) {
     try {
-      await this.redisClient.del(this.getUserTasksCacheKey(userId));
+      const cacheKeys = await this.redisClient.keys(`tasks:user:${userId}:*`);
+
+      if (cacheKeys.length > 0) {
+        await this.redisClient.del(cacheKeys);
+      }
     } catch {
       this.logger.warn(`Failed to invalidate tasks cache for user ${userId}`);
     }
@@ -41,30 +46,54 @@ export class TasksService {
     return task;
   }
 
-  async findAll(userId: string) {
-    const cacheKey = this.getUserTasksCacheKey(userId);
+  async findAll(userId: string, pagination: FindTasksDto) {
+    const { page, limit } = pagination;
+    const cacheKey = this.getUserTasksCacheKey(userId, page, limit);
 
     try {
       const cachedTasks = await this.redisClient.get(cacheKey);
 
       if (cachedTasks) {
-        return JSON.parse(cachedTasks) as Task[];
+        return JSON.parse(cachedTasks) as {
+          data: Task[];
+          meta: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+          };
+        };
       }
     } catch {
       this.logger.warn(`Failed to read tasks cache for user ${userId}`);
     }
 
-    const tasks = await this.taskRepository.find({
+    const [tasks, total] = await this.taskRepository.findAndCount({
       where: {
         user: { id: userId },
         is_deleted: false,
       },
+      order: {
+        created_at: 'DESC',
+      },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    const response = {
+      data: tasks,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
 
     try {
       await this.redisClient.set(
         cacheKey,
-        JSON.stringify(tasks),
+        JSON.stringify(response),
         'EX',
         this.cacheTtlInSeconds,
       );
@@ -72,7 +101,7 @@ export class TasksService {
       this.logger.warn(`Failed to write tasks cache for user ${userId}`);
     }
 
-    return tasks;
+    return response;
   }
 
   async updateTask(userId: string, taskId: string, updates: UpdateTaskDto) {
