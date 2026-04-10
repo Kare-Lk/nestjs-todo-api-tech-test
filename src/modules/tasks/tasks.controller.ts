@@ -7,11 +7,11 @@ import {
   Delete,
   Body,
   Param,
-  Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TasksService } from './tasks.service';
 import { Task } from './entities/task.entity';
+import { CurrentUser } from '../users/decorator/current-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('tasks')
@@ -20,64 +20,36 @@ export class TasksController {
 
   @Post()
   create(
+    @CurrentUser('userId') userId: string,
     @Body()
     body: {
       title: string;
       description?: string;
     },
-    @Req()
-    req: {
-      user: {
-        userId: string;
-      };
-    },
   ) {
-    return this.tasksService.create(
-      req.user.userId,
-      body.title,
-      body?.description,
-    );
+    return this.tasksService.create(userId, body.title, body?.description);
   }
 
   @Get()
-  findAll(
-    @Req()
-    req: {
-      user: {
-        userId: string;
-      };
-    },
-  ) {
-    return this.tasksService.findAll(req.user.userId);
+  findAll(@CurrentUser('userId') userId: string) {
+    return this.tasksService.findAll(userId);
   }
 
   @Patch(':id/status')
   updateStatus(
+    @CurrentUser('userId')
+    userId: string,
     @Param('id') id: string,
     @Body()
     body: {
       status: Task['status'];
     },
-    @Req()
-    req: {
-      user: {
-        userId: string;
-      };
-    },
   ) {
-    return this.tasksService.updateStatus(req.user.userId, id, body.status);
+    return this.tasksService.updateStatus(userId, id, body.status);
   }
 
   @Delete(':id')
-  remove(
-    @Param('id') id: string,
-    @Req()
-    req: {
-      user: {
-        userId: string;
-      };
-    },
-  ) {
-    return this.tasksService.remove(req.user.userId, id);
+  remove(@Param('id') id: string, @CurrentUser('userId') userId: string) {
+    return this.tasksService.remove(userId, id);
   }
 }
