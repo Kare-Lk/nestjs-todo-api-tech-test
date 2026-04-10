@@ -7,6 +7,12 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "docker:up": "docker compose up --build",
+    "docker:up:d": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:down:v": "docker compose down -v",
+    "docker:deps": "docker compose -f docker-compose.yml -f docker-compose.local.yml up -d db redis",
+    "docker:deps:down": "docker compose -f docker-compose.yml -f docker-compose.local.yml down",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

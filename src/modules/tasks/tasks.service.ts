@@ -26,7 +26,7 @@ export class TasksService {
       const cacheKeys = await this.redisClient.keys(`tasks:user:${userId}:*`);
 
       if (cacheKeys.length > 0) {
-        await this.redisClient.del(cacheKeys);
+        await this.redisClient.del(...cacheKeys);
       }
     } catch {
       this.logger.warn(`Failed to invalidate tasks cache for user ${userId}`);
