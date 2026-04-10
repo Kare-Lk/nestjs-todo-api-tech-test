@@ -17,8 +17,8 @@ import {
   type CreateTaskDto,
 } from './schemas/create-task.schema';
 import {
-  UpdateTaskStatusSchema,
-  type UpdateTaskStatusDto,
+  UpdateTaskSchema,
+  type UpdateTaskDto,
 } from './schemas/update-task.schema';
 
 @UseGuards(JwtAuthGuard)
@@ -39,15 +39,15 @@ export class TasksController {
     return this.tasksService.findAll(userId);
   }
 
-  @Patch(':id/status')
-  updateStatus(
+  @Patch(':id')
+  updateTask(
     @CurrentUser('userId')
     userId: string,
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateTaskStatusSchema))
-    body: UpdateTaskStatusDto,
+    @Body(new ZodValidationPipe(UpdateTaskSchema))
+    body: UpdateTaskDto,
   ) {
-    return this.tasksService.updateStatus(userId, id, body.status);
+    return this.tasksService.updateTask(userId, id, body);
   }
 
   @Delete(':id')
