@@ -118,5 +118,5 @@ Desde ahi se pueden consultar y probar los endpoints de la API.
 - `GET /tasks` está paginado.
 - El listado de tareas por usuario se cachea en Redis.
 - El cache se invalida al crear, actualizar o eliminar tareas.
-- `synchronize: true` está habilitado para facilitar la ejecución de la prueba técnica.
+- El schema se inicializa mediante migraciones TypeORM.
 - La paginación de tareas se hace utilizando `skip` y `take` en la consulta de la base de datos. Para casos de uso real, se recomienda utilizar [cursores](https://www.postgresql.org/docs/current/plpgsql-cursors.html) en PostgreSQL.

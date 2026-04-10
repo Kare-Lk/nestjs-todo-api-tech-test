@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 
@@ -84,7 +84,7 @@ describe('AuthService', () => {
     // Si el usuario ya existe, no debe intentar crear uno nuevo.
     await expect(
       service.register('user@test.com', 'secret123'),
-    ).rejects.toThrow('User already exists');
+    ).rejects.toBeInstanceOf(ConflictException);
     expect(usersServiceMock.create).not.toHaveBeenCalled();
   });
 
