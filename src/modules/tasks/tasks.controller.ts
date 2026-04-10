@@ -10,8 +10,16 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TasksService } from './tasks.service';
-import { Task } from './entities/task.entity';
 import { CurrentUser } from '../users/decorator/current-user.decorator';
+import { ZodValidationPipe } from '../../common/pipelines/zod-validation.pipeline';
+import {
+  createTaskSchema,
+  type CreateTaskDto,
+} from './schemas/create-task.schema';
+import {
+  UpdateTaskStatusSchema,
+  type UpdateTaskStatusDto,
+} from './schemas/update-task.schema';
 
 @UseGuards(JwtAuthGuard)
 @Controller('tasks')
@@ -21,11 +29,7 @@ export class TasksController {
   @Post()
   create(
     @CurrentUser('userId') userId: string,
-    @Body()
-    body: {
-      title: string;
-      description?: string;
-    },
+    @Body(new ZodValidationPipe(createTaskSchema)) body: CreateTaskDto,
   ) {
     return this.tasksService.create(userId, body.title, body?.description);
   }
@@ -40,10 +44,8 @@ export class TasksController {
     @CurrentUser('userId')
     userId: string,
     @Param('id') id: string,
-    @Body()
-    body: {
-      status: Task['status'];
-    },
+    @Body(new ZodValidationPipe(UpdateTaskStatusSchema))
+    body: UpdateTaskStatusDto,
   ) {
     return this.tasksService.updateStatus(userId, id, body.status);
   }
